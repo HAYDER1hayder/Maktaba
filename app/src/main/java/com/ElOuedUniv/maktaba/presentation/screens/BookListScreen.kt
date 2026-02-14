@@ -13,10 +13,20 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.ElOuedUniv.maktaba.data.model.Book
 import com.ElOuedUniv.maktaba.presentation.viewmodel.BookViewModel
+import androidx.compose.ui.graphics.Color
+import androidx.compose.foundation.background
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.foundation.background
+import androidx.compose.material.icons.Icons
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.unit.dp
+import androidx.compose.material.icons.filled.AutoStories
 
-/**
- * Main screen displaying the list of books
- */
+
+
+/*Main screen displaying the list of book */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun BookListScreen(
@@ -53,7 +63,8 @@ fun BookListScreen(
                 } else {
                     BookList(
                         books = books,
-                        modifier = Modifier.fillMaxSize()
+                        modifier = Modifier.fillMaxSize(),
+                                viewModel = viewModel
                     )
                 }
             }
@@ -61,21 +72,83 @@ fun BookListScreen(
     }
 }
 
-/**
- * Composable for displaying a list of books
- */
+/*Composable for displaying a list of books*/
 @Composable
 fun BookList(
     books: List<Book>,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    viewModel: BookViewModel
 ) {
+    val totalBooks by viewModel.countOfBooks.collectAsState(initial = 0)
+    val totalPages by viewModel.sumOfPages.collectAsState(initial = 0)
+
     LazyColumn(
         modifier = modifier,
         contentPadding = PaddingValues(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
+
+        item {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 8.dp),
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+
+                StatCard(
+                    label = "The Books",
+                    value = "$totalBooks",
+                    containerColor = Color(0xFF6200EE),
+                    modifier = Modifier.weight(1f)
+                )
+
+                StatCard(
+                    label = "The Pages",
+                    value = "$totalPages",
+                    containerColor = Color(0xFF03DAC5),
+                    modifier = Modifier.weight(1f)
+                )
+            }
+        }
+
         items(books) { book ->
             BookItem(book = book)
+        }
+    }
+}
+
+@Composable
+fun StatCard(
+    label: String,
+    value: String,
+    containerColor: Color,
+    modifier: Modifier = Modifier
+) {
+    Card(
+        modifier = modifier,
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(containerColor = containerColor),
+        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+    ) {
+        Column(
+            modifier = Modifier
+                .padding(16.dp)
+                .fillMaxWidth(),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Text(
+                text = label,
+                style = MaterialTheme.typography.labelLarge,
+                color = Color.White.copy(alpha = 0.8f)
+            )
+            Spacer(modifier = Modifier.height(4.dp))
+            Text(
+                text = value,
+                style = MaterialTheme.typography.headlineMedium,
+                fontWeight = FontWeight.Bold,
+                color = Color.White
+            )
         }
     }
 }
@@ -86,47 +159,69 @@ fun BookList(
 @Composable
 fun BookItem(book: Book) {
     Card(
-        modifier = Modifier.fillMaxWidth(),
-        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+        modifier = Modifier
+            .padding(horizontal = 16.dp, vertical = 10.dp)
+            .fillMaxWidth(),
+        shape = RoundedCornerShape(24.dp), // زوايا منحنية تعطي طابعاً حديثاً
+        colors = CardDefaults.cardColors(containerColor = Color.White),
+        elevation = CardDefaults.cardElevation(defaultElevation = 8.dp) // ظل عميق للفخامة
     ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp)
-        ) {
-            Text(
-                text = book.title,
-                style = MaterialTheme.typography.titleLarge,
-                fontWeight = FontWeight.Bold
-            )
-            
-            Spacer(modifier = Modifier.height(8.dp))
-            
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween
+        Column {
+            // الجزء العلوي: خلفية بتدرج لوني (بمثابة غلاف افتراضي)
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(140.dp)
+                    .background(
+                        Brush.linearGradient(
+                            colors = listOf(Color(0xFF6366F1), Color(0xFFA855F7)) // تدرج بنفسجي ملكي
+                        )
+                    ),
+                contentAlignment = Alignment.Center
             ) {
-                Column {
+                Icon(
+                    Icons.Filled.AutoStories,
+                    contentDescription = null,
+                    modifier = Modifier.size(48.dp),
+                    tint = Color.White.copy(alpha = 0.7f)
+                )
+            }
+
+            // الجزء السفلي: تفاصيل الكتاب تنسيق أنيق
+            Column(modifier = Modifier.padding(20.dp)) {
+                Text(
+                    text = book.title,
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.ExtraBold,
+                    color = Color(0xFF1F2937),
+                    maxLines = 1
+                )
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    // ملصق صغير لعدد الصفحات (Tag)
+                    Surface(
+                        color = Color(0xFFF3F4F6),
+                        shape = RoundedCornerShape(8.dp)
+                    ) {
+                        Text(
+                            text = "${book.nbPages} P",
+                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                            style = MaterialTheme.typography.labelMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = Color(0xFF6B7280)
+                        )
+                    }
+
                     Text(
-                        text = "ISBN:",
+                        text = "ISBN: ${book.isbn.takeLast(30)}...", // عرض آخر 4 أرقام للأناقة
                         style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                    Text(
-                        text = if (book.isbn.isEmpty()) "Not set" else book.isbn,
-                        style = MaterialTheme.typography.bodyMedium
-                    )
-                }
-                
-                Column(horizontalAlignment = Alignment.End) {
-                    Text(
-                        text = "Pages:",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                    Text(
-                        text = if (book.nbPages == 0) "Not set" else "${book.nbPages}",
-                        style = MaterialTheme.typography.bodyMedium
+                        color = Color.LightGray
                     )
                 }
             }
@@ -161,3 +256,4 @@ fun EmptyBooksMessage(modifier: Modifier = Modifier) {
         )
     }
 }
+

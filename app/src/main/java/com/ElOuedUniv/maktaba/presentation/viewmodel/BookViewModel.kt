@@ -8,6 +8,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.flow.map
 
 /**
  * ViewModel for managing book-related UI state
@@ -23,6 +24,12 @@ class BookViewModel(
     
     // Public immutable state for UI observation
     val books: StateFlow<List<Book>> = _books.asStateFlow()
+
+    val countOfBooks = books.map { it.size }
+
+    val sumOfPages = books.map { currentList ->
+        currentList.sumOf { it.nbPages }
+    }
 
     // Loading state
     private val _isLoading = MutableStateFlow(false)
