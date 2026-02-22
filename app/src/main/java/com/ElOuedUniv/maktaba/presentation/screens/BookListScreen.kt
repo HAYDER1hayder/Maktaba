@@ -1,47 +1,64 @@
 package com.ElOuedUniv.maktaba.presentation.screens
 
+import androidx.compose.animation.*
+import androidx.compose.animation.core.*
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.AutoStories
+import androidx.compose.material.icons.filled.MenuBook
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.scale
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.ElOuedUniv.maktaba.data.model.Book
 import com.ElOuedUniv.maktaba.presentation.viewmodel.BookViewModel
-import androidx.compose.ui.graphics.Color
-import androidx.compose.foundation.background
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
-import androidx.compose.foundation.background
-import androidx.compose.material.icons.Icons
-import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.unit.dp
-import androidx.compose.material.icons.filled.AutoStories
+import kotlin.math.min
 
+// الألوان الخاصة بالتصميم الداكن الحديث
+val DeepDark = Color(0xFF0F0F12)
+val SurfaceDark = Color(0xFF1E1E24)
+val NeonPurple = Color(0xFF8B5CF6)
+val SoftPurple = Color(0xFFC084FC)
+val AccentPink = Color(0xFFEC4899)
 
-
-/*Main screen displaying the list of book */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun BookListScreen(
-    viewModel: BookViewModel
-) {
+fun BookListScreen(viewModel: BookViewModel) {
     val books by viewModel.books.collectAsState()
     val isLoading by viewModel.isLoading.collectAsState()
 
     Scaffold(
+        containerColor = DeepDark, // الخلفية الداكنة الأساسية
         topBar = {
-            TopAppBar(
-                title = { Text("Maktaba - My Library") },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.primaryContainer,
-                    titleContentColor = MaterialTheme.colorScheme.onPrimaryContainer
+            CenterAlignedTopAppBar(
+                title = {
+                    Text(
+                        "Maktaba Library",
+                        style = MaterialTheme.typography.headlineSmall.copy(
+                            fontWeight = FontWeight.Bold,
+                            letterSpacing = 1.sp
+                        )
+                    )
+                },
+                colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
+                    containerColor = DeepDark,
+                    titleContentColor = Color.White
                 )
             )
         }
@@ -53,18 +70,17 @@ fun BookListScreen(
         ) {
             if (isLoading) {
                 CircularProgressIndicator(
-                    modifier = Modifier.align(Alignment.Center)
+                    modifier = Modifier.align(Alignment.Center),
+                    color = NeonPurple
                 )
             } else {
                 if (books.isEmpty()) {
-                    EmptyBooksMessage(
-                        modifier = Modifier.align(Alignment.Center)
-                    )
+                    EmptyBooksMessage(modifier = Modifier.align(Alignment.Center))
                 } else {
                     BookList(
                         books = books,
                         modifier = Modifier.fillMaxSize(),
-                                viewModel = viewModel
+                        viewModel = viewModel
                     )
                 }
             }
@@ -72,188 +88,185 @@ fun BookListScreen(
     }
 }
 
-/*Composable for displaying a list of books*/
 @Composable
 fun BookList(
     books: List<Book>,
     modifier: Modifier = Modifier,
     viewModel: BookViewModel
 ) {
+    val listState = rememberLazyListState()
     val totalBooks by viewModel.countOfBooks.collectAsState(initial = 0)
     val totalPages by viewModel.sumOfPages.collectAsState(initial = 0)
 
     LazyColumn(
+        state = listState,
         modifier = modifier,
-        contentPadding = PaddingValues(16.dp),
+        contentPadding = PaddingValues(bottom = 32.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-
         item {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(vertical = 8.dp),
-                horizontalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-
-                StatCard(
-                    label = "The Books",
-                    value = "$totalBooks",
-                    containerColor = Color(0xFF6200EE),
-                    modifier = Modifier.weight(1f)
-                )
-
-                StatCard(
-                    label = "The Pages",
-                    value = "$totalPages",
-                    containerColor = Color(0xFF03DAC5),
-                    modifier = Modifier.weight(1f)
-                )
-            }
+            UltraHeader(
+                totalBooks = totalBooks,
+                totalPages = totalPages,
+                scrollOffset = listState.firstVisibleItemScrollOffset
+            )
         }
 
-        items(books) { book ->
-            BookItem(book = book)
+        itemsIndexed(
+            items = books,
+            key = { _, book -> book.isbn } // مفتاح فريد لتحسين الأداء
+        ) { index, book ->
+            // أنيميشن خفيف جداً لا يسبب تقطيع
+            UltraBookItem(book = book)
         }
     }
 }
 
 @Composable
-fun StatCard(
-    label: String,
-    value: String,
-    containerColor: Color,
-    modifier: Modifier = Modifier
-) {
-    Card(
-        modifier = modifier,
-        shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(containerColor = containerColor),
-        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
-    ) {
-        Column(
-            modifier = Modifier
-                .padding(16.dp)
-                .fillMaxWidth(),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            Text(
-                text = label,
-                style = MaterialTheme.typography.labelLarge,
-                color = Color.White.copy(alpha = 0.8f)
-            )
-            Spacer(modifier = Modifier.height(4.dp))
-            Text(
-                text = value,
-                style = MaterialTheme.typography.headlineMedium,
-                fontWeight = FontWeight.Bold,
-                color = Color.White
-            )
-        }
-    }
-}
-
-/**
- * Composable for displaying a single book item
- */
-@Composable
-fun BookItem(book: Book) {
+fun UltraBookItem(book: Book) {
+    // نستخدم التفاعل السطحي بدلاً من الأنيميشن المستمر
     Card(
         modifier = Modifier
-            .padding(horizontal = 16.dp, vertical = 10.dp)
-            .fillMaxWidth(),
-        shape = RoundedCornerShape(24.dp), // زوايا منحنية تعطي طابعاً حديثاً
-        colors = CardDefaults.cardColors(containerColor = Color.White),
-        elevation = CardDefaults.cardElevation(defaultElevation = 8.dp) // ظل عميق للفخامة
+            .padding(horizontal = 16.dp)
+            .fillMaxWidth()
+            .graphicsLayer {
+                // تقليل استهلاك الذاكرة عبر الـ Layer
+                clip = true
+                shape = RoundedCornerShape(20.dp)
+            }
+            .clickable { /* Action */ },
+        shape = RoundedCornerShape(20.dp),
+        colors = CardDefaults.cardColors(containerColor = SurfaceDark)
     ) {
-        Column {
-            // الجزء العلوي: خلفية بتدرج لوني (بمثابة غلاف افتراضي)
+        Row(
+            modifier = Modifier
+                .padding(12.dp)
+                .fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            // أيقونة الكتاب
             Box(
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .height(140.dp)
-                    .background(
-                        Brush.linearGradient(
-                            colors = listOf(Color(0xFF6366F1), Color(0xFFA855F7)) // تدرج بنفسجي ملكي
-                        )
-                    ),
+                    .size(100.dp)
+                    .clip(RoundedCornerShape(12.dp))
+                    .background(Color(0xFF2A2A32)), // لون ثابت أسرع في الرسم من التدرج
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
-                    Icons.Filled.AutoStories,
+                    imageVector = Icons.Default.MenuBook,
                     contentDescription = null,
-                    modifier = Modifier.size(48.dp),
-                    tint = Color.White.copy(alpha = 0.7f)
+                    tint = SoftPurple,
+                    modifier = Modifier.size(40.dp)
                 )
             }
 
-            // الجزء السفلي: تفاصيل الكتاب تنسيق أنيق
-            Column(modifier = Modifier.padding(20.dp)) {
+            Spacer(modifier = Modifier.width(16.dp))
+
+            Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = book.title,
-                    style = MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.ExtraBold,
-                    color = Color(0xFF1F2937),
-                    maxLines = 1
+                    color = Color.White,
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
                 )
+                Text(
+                    text = "ISBN: ${book.isbn}",
+                    color = Color.Gray,
+                    style = MaterialTheme.typography.bodySmall
+                )
+                Spacer(modifier = Modifier.height(4.dp))
 
-                Spacer(modifier = Modifier.height(8.dp))
 
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
+                Box(
+                    modifier = Modifier
+                        .background(NeonPurple.copy(alpha = 0.15f), CircleShape)
+                        .padding(horizontal = 10.dp, vertical = 2.dp)
                 ) {
-                    // ملصق صغير لعدد الصفحات (Tag)
-                    Surface(
-                        color = Color(0xFFF3F4F6),
-                        shape = RoundedCornerShape(8.dp)
-                    ) {
-                        Text(
-                            text = "${book.nbPages} P",
-                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
-                            style = MaterialTheme.typography.labelMedium,
-                            fontWeight = FontWeight.Bold,
-                            color = Color(0xFF6B7280)
-                        )
-                    }
-
                     Text(
-                        text = "ISBN: ${book.isbn.takeLast(30)}...", // عرض آخر 4 أرقام للأناقة
-                        style = MaterialTheme.typography.bodySmall,
-                        color = Color.LightGray
+                        text = "${book.nbPages} Pages",
+                        color = SoftPurple,
+                        style = MaterialTheme.typography.labelSmall,
+                        fontWeight = FontWeight.Medium
                     )
                 }
             }
         }
     }
 }
+@Composable
+fun UltraHeader(totalBooks: Int, totalPages: Int, scrollOffset: Int) {
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(16.dp)
+            .height(140.dp)
+            .clip(RoundedCornerShape(24.dp))
+            .background(
+                Brush.linearGradient(
+                    colors = listOf(NeonPurple, AccentPink)
+                )
+            )
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(20.dp),
+            horizontalArrangement = Arrangement.SpaceEvenly,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            HeaderStatItem("Books", totalBooks.toString(), Modifier.weight(1f))
+            Box(modifier = Modifier.width(1.dp).fillMaxHeight(0.5f).background(Color.White.copy(0.3f)))
+            HeaderStatItem("Total Pages", totalPages.toString(), Modifier.weight(1f))
+        }
+    }
+}
 
-/**
- * Composable for displaying empty state message
- */
+@Composable
+fun HeaderStatItem(label: String, value: String, modifier: Modifier) {
+    Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = modifier) {
+        Text(label, color = Color.White.copy(0.8f), style = MaterialTheme.typography.labelMedium)
+        AnimatedContent(targetState = value, label = "") { targetValue ->
+            Text(
+                targetValue,
+                color = Color.White,
+                style = MaterialTheme.typography.displaySmall,
+                fontWeight = FontWeight.Black
+            )
+        }
+    }
+}
+
+
 @Composable
 fun EmptyBooksMessage(modifier: Modifier = Modifier) {
     Column(
         modifier = modifier,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Text(
-            text = "📚",
-            style = MaterialTheme.typography.displayLarge
-        )
-        Spacer(modifier = Modifier.height(16.dp))
-        Text(
-            text = "No books in your library",
-            style = MaterialTheme.typography.titleMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
+        Icon(
+            imageVector = Icons.Default.AutoStories,
+            contentDescription = null,
+            modifier = Modifier.size(80.dp),
+            tint = Color.Gray
         )
         Spacer(modifier = Modifier.height(8.dp))
         Text(
-            text = "Complete the TODO exercises in BookRepository.kt",
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
+            text = "Your library is empty",
+            color = Color.White,
+            style = MaterialTheme.typography.titleMedium
+        )
+        Text(
+            text = "Add some books to get started!",
+            color = Color.Gray,
+            style = MaterialTheme.typography.bodySmall
         )
     }
 }
+
+private fun Modifier.contentSize(size: androidx.compose.ui.unit.Dp, tint: Color): Modifier = this.size(size)
+
+
+
 
