@@ -30,7 +30,6 @@ import com.ElOuedUniv.maktaba.data.model.Book
 import com.ElOuedUniv.maktaba.presentation.viewmodel.BookViewModel
 import kotlin.math.min
 
-// الألوان الخاصة بالتصميم الداكن الحديث
 val DeepDark = Color(0xFF0F0F12)
 val SurfaceDark = Color(0xFF1E1E24)
 val NeonPurple = Color(0xFF8B5CF6)
@@ -44,7 +43,7 @@ fun BookListScreen(viewModel: BookViewModel) {
     val isLoading by viewModel.isLoading.collectAsState()
 
     Scaffold(
-        containerColor = DeepDark, // الخلفية الداكنة الأساسية
+        containerColor = DeepDark,
         topBar = {
             CenterAlignedTopAppBar(
                 title = {
@@ -114,9 +113,9 @@ fun BookList(
 
         itemsIndexed(
             items = books,
-            key = { _, book -> book.isbn } // مفتاح فريد لتحسين الأداء
+            key = { _, book -> book.isbn }
         ) { index, book ->
-            // أنيميشن خفيف جداً لا يسبب تقطيع
+
             UltraBookItem(book = book)
         }
     }
@@ -124,13 +123,13 @@ fun BookList(
 
 @Composable
 fun UltraBookItem(book: Book) {
-    // نستخدم التفاعل السطحي بدلاً من الأنيميشن المستمر
+
     Card(
         modifier = Modifier
             .padding(horizontal = 16.dp)
             .fillMaxWidth()
             .graphicsLayer {
-                // تقليل استهلاك الذاكرة عبر الـ Layer
+
                 clip = true
                 shape = RoundedCornerShape(20.dp)
             }
@@ -144,12 +143,12 @@ fun UltraBookItem(book: Book) {
                 .fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // أيقونة الكتاب
+
             Box(
                 modifier = Modifier
                     .size(100.dp)
                     .clip(RoundedCornerShape(12.dp))
-                    .background(Color(0xFF2A2A32)), // لون ثابت أسرع في الرسم من التدرج
+                    .background(Color(0xFF2A2A32)),
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
