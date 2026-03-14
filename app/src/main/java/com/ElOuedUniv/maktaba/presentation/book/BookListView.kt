@@ -24,17 +24,26 @@ fun BookListView(
     onCategoriesClick: () -> Unit = {},
     viewModel: BookViewModel = hiltViewModel()
 ) {
-    val books by viewModel.books.collectAsState()
-    val isLoading by viewModel.isLoading.collectAsState()
+//    val books by viewModel.books.collectAsState()
+//    val isLoading by viewModel.isLoading.collectAsState()
+
+    val uiState by viewModel.uiState.collectAsState()
     
     // TODO: Exercise 3 - Use a single delegated state from the ViewModel
     // val uiState by viewModel.uiState.collectAsState()
 
-    if (/* TODO: uiState.isAddingBook */ false) {
+    if (uiState.isAddingBook) {
         AddBookDialog(
-            onDismiss = { /* TODO: viewModel.onAction(BookUiAction.OnDismissAddBook) */ },
+            onDismiss = { viewModel.onAction(BookUiAction.OnDismissAddBook) },
             onConfirm = { title, isbn, pages ->
-                /* TODO: viewModel.onAction(BookUiAction.OnAddBookConfirm(title, isbn, pages)) */
+
+                viewModel.onAction(
+                    BookUiAction.OnAddBookConfirm(
+                        title = title,
+                        isbn = isbn,
+                        nbPages = pages
+                    )
+                )
             }
         )
     }
@@ -58,8 +67,8 @@ fun BookListView(
             )
         },
         floatingActionButton = {
-            FloatingActionButton(onClick = { 
-                /* TODO: Exercise 3 - viewModel.onAction(BookUiAction.OnAddBookClick) */
+            FloatingActionButton(onClick = {
+                viewModel.onAction(BookUiAction.OnAddBookClick)
             }) {
                 Icon(
                     imageVector = androidx.compose.material.icons.Icons.Default.Add,
@@ -73,18 +82,25 @@ fun BookListView(
                 .fillMaxSize()
                 .padding(paddingValues)
         ) {
-            if (isLoading) {
+            if (uiState.isLoading) {
                 CircularProgressIndicator(
                     modifier = Modifier.align(Alignment.Center)
                 )
-            } else {
-                if (books.isEmpty()) {
+            } else { if (uiState.errorMessage != null) {
+                Text(
+                    text = uiState.errorMessage!!,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.error,
+                    modifier = Modifier.align(Alignment.Center)
+                )
+            }else
+                if (uiState.books.isEmpty()) {
                     EmptyBooksMessage(
                         modifier = Modifier.align(Alignment.Center)
                     )
                 } else {
                     BookList(
-                        books = books,
+                        books = uiState.books,
                         modifier = Modifier.fillMaxSize()
                     )
                 }

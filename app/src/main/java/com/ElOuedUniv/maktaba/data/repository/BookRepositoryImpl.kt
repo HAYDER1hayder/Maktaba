@@ -4,36 +4,42 @@ import com.ElOuedUniv.maktaba.data.model.Book
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.emitAll
 import kotlinx.coroutines.flow.flow
 import javax.inject.Inject
 
 class BookRepositoryImpl @Inject constructor() : BookRepository {
 
-    private val _booksList = listOf(
-        Book(isbn = "11111", title = "Clean Code", nbPages = 10),
-        Book(isbn = "22222", title = "The Pragmatic Programmer", nbPages = 0),
-        Book(isbn = "33333", title = "Design Patterns", nbPages = 0),
-        Book(isbn = "44444", title = "Refactoring", nbPages = 0),
-        Book(isbn = "55555", title = "Head First Design Patterns", nbPages = 0)
+    private val _booksList = mutableListOf(
+        Book(isbn = "978-0132350884", title = "Clean Code", nbPages = 464),
+        Book(isbn = "978-0201616224", title = "The Pragmatic Programmer", nbPages = 352),
+        Book(isbn = "978-0201633610", title = "Design Patterns", nbPages = 416),
+        Book(isbn = "978-0134757599", title = "Refactoring", nbPages = 448),
+        Book(isbn = "978-1492078005", title = "Head First Design Patterns", nbPages = 672)
     )
 
-    private val booksFlow = MutableSharedFlow<List<Book>>(replay = 1).apply {
-        tryEmit(_booksList)
+    private val _booksFlow = MutableSharedFlow<List<Book>>(replay = 1).apply {
+        tryEmit(_booksList.toList())
     }
     
-    override fun getAllBooks(): Flow<List<Book>> = flow {
-        delay(2000) // Simulate delay
-        emitAll(booksFlow)
-    }
+//    override fun getAllBooks(): Flow<List<Book>> = flow {
+//        delay(2000) // Simulate delay
+//        emitAll(booksFlow)
+//    }
+
+    override fun getAllBooks(): Flow<List<Book>> = _booksFlow.asSharedFlow()
 
     override fun getBookByIsbn(isbn: String): Book? {
         return _booksList.find { it.isbn == isbn }
     }
 
-    override fun addBook(book: Book) {
+    override suspend fun addBook(book: Book) {
         // TODO: Exercise 2 - Implement adding a book to the list and emitting the new list
         // Hint: This is a bit tricky with sharedFlow, think about how to update it.
+
+        _booksList.add(book)
+        _booksFlow.emit(_booksList.toList())
     }
 }
 
