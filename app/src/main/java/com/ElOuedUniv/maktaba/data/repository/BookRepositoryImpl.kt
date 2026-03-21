@@ -5,11 +5,11 @@ import com.ElOuedUniv.maktaba.data.model.Book
 class BookRepositoryImpl : BookRepository {
 
     private val booksList = listOf(
-        Book(isbn = "11111", title = "Clean Code", nbPages = 10),
-        Book(isbn = "", title = "The Pragmatic Programmer", nbPages = 0),
-        Book(isbn = "", title = "Design Patterns", nbPages = 0),
-        Book(isbn = "", title = "Refactoring", nbPages = 0),
-        Book(isbn = "", title = "Head First Design Patterns", nbPages = 0)
+        Book(isbn = "978-0132350884", title = "Clean Code", nbPages = 464),
+        Book(isbn = "978-0201616224", title = "The Pragmatic Programmer", nbPages = 352),
+        Book(isbn = "978-0201633610", title = "Design Patterns", nbPages = 416),
+        Book(isbn = "978-0134757599", title = "Refactoring", nbPages = 448),
+        Book(isbn = "978-1492078005", title = "Head First Design Patterns", nbPages = 672)
     )
     
     override fun getAllBooks(): List<Book> {
