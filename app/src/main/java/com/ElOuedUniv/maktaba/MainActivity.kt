@@ -44,6 +44,7 @@ class MainActivity : ComponentActivity() {
                     BookListView(
                         viewModel = bookViewModel,
                         onCategoriesClick = { showCategories = true }
+                        //Haidar
                     )
                 }
             }
