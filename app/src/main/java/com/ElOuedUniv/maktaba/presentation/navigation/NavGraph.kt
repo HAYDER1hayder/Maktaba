@@ -2,13 +2,17 @@ package com.ElOuedUniv.maktaba.presentation.navigation
 
 import androidx.compose.foundation.background
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.ElOuedUniv.maktaba.presentation.book.BookListView
 import com.ElOuedUniv.maktaba.presentation.book.add.AddBookView
+import com.ElOuedUniv.maktaba.presentation.book.add.AddBookViewModel
 import com.ElOuedUniv.maktaba.presentation.book.detail.BookDetailView
 import com.ElOuedUniv.maktaba.presentation.category.CategoryListView
 import com.ElOuedUniv.maktaba.presentation.onboarding.OnboardingView
@@ -54,7 +58,15 @@ fun NavGraph(
         }
 
         composable(Screen.AddBook.route) {
-            AddBookView(onBackClick = { navController.popBackStack() })
+            // استدعاء الـ ViewModel تلقائياً باستخدام Hilt
+            val viewModel: AddBookViewModel = hiltViewModel()
+            val state by viewModel.uiState.collectAsState()
+
+            AddBookView(
+                state = state,
+                onAction = { action -> viewModel.onAction(action) },
+                onBack = { navController.popBackStack() } // تأكد أن الاسم هنا onBack ليتوافق مع الـ View
+            )
         }
     }
 }
