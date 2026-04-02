@@ -1,6 +1,8 @@
 package com.ElOuedUniv.maktaba.presentation.navigation
 
+import androidx.compose.foundation.background
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Modifier
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -10,6 +12,7 @@ import com.ElOuedUniv.maktaba.presentation.book.add.AddBookView
 import com.ElOuedUniv.maktaba.presentation.book.detail.BookDetailView
 import com.ElOuedUniv.maktaba.presentation.category.CategoryListView
 import com.ElOuedUniv.maktaba.presentation.onboarding.OnboardingView
+import com.ElOuedUniv.maktaba.presentation.theme.GeminiDeepSpace // استيراد اللون الملكي
 
 @Composable
 fun NavGraph(
@@ -17,7 +20,9 @@ fun NavGraph(
 ) {
     NavHost(
         navController = navController,
-        startDestination = Screen.Onboarding.route
+        startDestination = Screen.Onboarding.route,
+        // إضافة خلفية سوداء عميقة للـ NavHost لمنع أي وميض أبيض أثناء التنقل
+        modifier = Modifier.background(GeminiDeepSpace)
     ) {
         composable(Screen.Onboarding.route) {
             OnboardingView(
@@ -28,25 +33,26 @@ fun NavGraph(
                 }
             )
         }
-        
+
         composable(Screen.BookList.route) {
+            // استدعاء الواجهة الفخمة مع الربط الصحيح للأحداث
             BookListView(
                 onCategoriesClick = { navController.navigate(Screen.CategoryList.route) },
                 onAddBookClick = { navController.navigate(Screen.AddBook.route) },
-                onBookClick = { isbn -> 
+                onBookClick = { isbn ->
                     navController.navigate(Screen.BookDetail.createRoute(isbn))
                 }
             )
         }
-        
+
         composable(Screen.BookDetail.route) {
             BookDetailView(onBackClick = { navController.popBackStack() })
         }
-        
+
         composable(Screen.CategoryList.route) {
             CategoryListView(onBackClick = { navController.popBackStack() })
         }
-        
+
         composable(Screen.AddBook.route) {
             AddBookView(onBackClick = { navController.popBackStack() })
         }
