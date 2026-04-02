@@ -1,5 +1,7 @@
 package com.ElOuedUniv.maktaba.presentation.book.add
 
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
@@ -8,14 +10,18 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp // تأكد من استيراد ألوان النيون التي عرفناها سابقاً
+import androidx.compose.ui.unit.sp
+import coil.compose.AsyncImage
 import com.ElOuedUniv.maktaba.presentation.theme.GeminiDeepSpace
 import com.ElOuedUniv.maktaba.presentation.theme.GeminiGlassCard
 import com.ElOuedUniv.maktaba.presentation.theme.GeminiPurpleNeon
@@ -28,13 +34,22 @@ fun AddBookView(
     onAction: (AddBookUiAction) -> Unit,
     onBack: () -> Unit
 ) {
+    // لانشر لاختيار صورة من معرض الصور بالهاتف
+    val photoPickerLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent()
+    ) { uri ->
+        onAction(AddBookUiAction.OnImageSelected(uri?.toString()))
+    }
+
     // التنقل التلقائي عند نجاح الإضافة
-    if (state.isSuccess) {
-        onBack()
+    LaunchedEffect(state.isSuccess) {
+        if (state.isSuccess) {
+            onBack()
+        }
     }
 
     Scaffold(
-        containerColor = GeminiDeepSpace, // اللون الأسود المائل للزرقة
+        containerColor = GeminiDeepSpace,
         topBar = {
             CenterAlignedTopAppBar(
                 title = {
@@ -66,31 +81,65 @@ fun AddBookView(
         ) {
             Spacer(modifier = Modifier.height(20.dp))
 
-            // --- منطقة غلاف الكتاب (كما في الصورة المطلوبة) ---
-            Surface(
-                modifier = Modifier
-                    .width(160.dp)
-                    .height(230.dp)
-                    .shadow(30.dp, RoundedCornerShape(20.dp), spotColor = GeminiPurpleNeon),
-                shape = RoundedCornerShape(20.dp),
-                color = GeminiGlassCard,
-                border = BorderStroke(1.dp, Color.White.copy(alpha = 0.1f))
-            ) {
-                Column(
-                    verticalArrangement = Arrangement.Center,
-                    horizontalAlignment = Alignment.CenterHorizontally
+            // --- منطقة غلاف الكتاب مع زر الحذف X ---
+            Box(contentAlignment = Alignment.TopEnd) {
+                Surface(
+                    modifier = Modifier
+                        .width(160.dp)
+                        .height(230.dp)
+                        .shadow(30.dp, RoundedCornerShape(20.dp), spotColor = GeminiPurpleNeon)
+                        .clickable { photoPickerLauncher.launch("image/*") }, // فتح الاستوديو
+                    shape = RoundedCornerShape(20.dp),
+                    color = GeminiGlassCard,
+                    border = BorderStroke(1.dp, Color.White.copy(alpha = 0.1f))
                 ) {
-                    Icon(
-                        imageVector = Icons.Default.AddPhotoAlternate,
-                        contentDescription = null,
-                        modifier = Modifier.size(50.dp),
-                        tint = GeminiPurpleNeon.copy(alpha = 0.5f)
-                    )
-                    Text(
-                        "Add Cover",
-                        style = MaterialTheme.typography.labelMedium,
-                        color = GeminiTextSecondary
-                    )
+                    if (state.imageUrl != null) {
+                        // عرض الصورة المختارة
+                        AsyncImage(
+                            model = state.imageUrl,
+                            contentDescription = null,
+                            modifier = Modifier.fillMaxSize().clip(RoundedCornerShape(20.dp)),
+                            contentScale = ContentScale.Crop
+                        )
+                    } else {
+                        // عرض أيقونة "أضف صورة" الافتراضية
+                        Column(
+                            verticalArrangement = Arrangement.Center,
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.AddPhotoAlternate,
+                                contentDescription = null,
+                                modifier = Modifier.size(50.dp),
+                                tint = GeminiPurpleNeon.copy(alpha = 0.5f)
+                            )
+                            Text(
+                                "Add Cover",
+                                style = MaterialTheme.typography.labelMedium,
+                                color = GeminiTextSecondary
+                            )
+                        }
+                    }
+                }
+
+                // زر الغاء الصورة (X) يظهر فقط عند وجود صورة
+                if (state.imageUrl != null) {
+                    Box(
+                        modifier = Modifier
+                            .offset(x = 10.dp, y = (-10).dp)
+                            .size(28.dp)
+                            .background(Color.Red, CircleShape)
+                            .clickable { onAction(AddBookUiAction.OnRemoveImage) }
+                            .shadow(10.dp, CircleShape),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Close,
+                            contentDescription = "Remove",
+                            tint = Color.White,
+                            modifier = Modifier.size(18.dp)
+                        )
+                    }
                 }
             }
 
@@ -124,7 +173,7 @@ fun AddBookView(
 
             Spacer(modifier = Modifier.height(50.dp))
 
-            // --- زر الحفظ المتوهج (Confirm Add) ---
+            // --- زر التأكيد (Confirm) ---
             Button(
                 onClick = { onAction(AddBookUiAction.OnAddClick) },
                 modifier = Modifier
@@ -138,14 +187,20 @@ fun AddBookView(
                 if (state.isLoading) {
                     CircularProgressIndicator(color = Color.White, modifier = Modifier.size(24.dp))
                 } else {
-                    Text(
-                        "CONFIRM ADD",
-                        style = MaterialTheme.typography.titleMedium.copy(
-                            fontWeight = FontWeight.ExtraBold,
-                            letterSpacing = 1.sp
-                        )
-                    )
+                    Text("CONFIRM ADD", fontWeight = FontWeight.ExtraBold)
                 }
+            }
+
+            // --- زر الإلغاء (Cancel) المضاف تحت زر التأكيد ---
+            TextButton(
+                onClick = onBack,
+                modifier = Modifier.fillMaxWidth().padding(top = 10.dp)
+            ) {
+                Text(
+                    "CANCEL",
+                    color = Color.White.copy(alpha = 0.6f),
+                    style = MaterialTheme.typography.labelLarge
+                )
             }
 
             Spacer(modifier = Modifier.height(30.dp))
@@ -170,9 +225,7 @@ fun VIPInputField(
             focusedBorderColor = GeminiPurpleNeon,
             unfocusedBorderColor = Color.White.copy(alpha = 0.1f),
             focusedTextColor = Color.White,
-            unfocusedTextColor = Color.White,
-            focusedContainerColor = Color.Transparent,
-            unfocusedContainerColor = Color.Transparent
+            unfocusedTextColor = Color.White
         ),
         shape = RoundedCornerShape(16.dp),
         singleLine = true
