@@ -49,12 +49,25 @@ fun BookDetailView(
                     Text(
                         "BOOK DETAILS",
                         color = Color.White,
-                        style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Black, letterSpacing = 2.sp)
+                        style = MaterialTheme.typography.titleMedium.copy(
+                            fontWeight = FontWeight.Black,
+                            letterSpacing = 2.sp
+                        )
                     )
                 },
                 navigationIcon = {
                     IconButton(onClick = { viewModel.onAction(BookDetailUiAction.OnBackClick) }) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = null, tint = Color.White)
+                    }
+                },
+                // ✅ إضافة زر التعديل في شريط الأدوات العلوي
+                actions = {
+                    IconButton(onClick = { viewModel.onAction(BookDetailUiAction.OnEditClick) }) {
+                        Icon(
+                            imageVector = Icons.Default.Edit,
+                            contentDescription = "Edit Book",
+                            tint = statusColor // استخدام لون النيون للزر
+                        )
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent)
@@ -75,19 +88,23 @@ fun BookDetailView(
         ) {
             Spacer(modifier = Modifier.height(30.dp))
 
-            // 1. الغلاف المتوهج (Neon Cover)
+            // ✅ 1. عرض صورة الكتاب بتوهج نيون (Neon Cover)
             Surface(
                 modifier = Modifier
                     .width(220.dp)
                     .aspectRatio(0.7f)
-                    .shadow(40.dp, RoundedCornerShape(24.dp), spotColor = statusColor),
+                    .shadow(
+                        elevation = 40.dp,
+                        shape = RoundedCornerShape(24.dp),
+                        spotColor = statusColor
+                    ),
                 shape = RoundedCornerShape(24.dp),
                 color = GeminiGlassCard,
                 border = BorderStroke(1.dp, Color.White.copy(alpha = 0.1f))
             ) {
                 AsyncImage(
                     model = uiState.book?.imageUrl,
-                    contentDescription = null,
+                    contentDescription = "Book Cover",
                     modifier = Modifier.fillMaxSize(),
                     contentScale = ContentScale.Crop
                 )
@@ -95,7 +112,7 @@ fun BookDetailView(
 
             Spacer(modifier = Modifier.height(40.dp))
 
-            // 2. معلومات الكتاب (تم حذف الكاتب هنا)
+            // 2. معلومات التقدم (Reading Progress)
             Column(modifier = Modifier.padding(horizontal = 30.dp)) {
                 Text(
                     text = uiState.book?.title ?: "Loading...",
@@ -105,7 +122,6 @@ fun BookDetailView(
 
                 Spacer(modifier = Modifier.height(30.dp))
 
-                // نسبة القراءة (75%)
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween,
