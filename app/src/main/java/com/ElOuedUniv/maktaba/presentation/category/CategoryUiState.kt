@@ -4,7 +4,7 @@ import com.ElOuedUniv.maktaba.data.model.Category
 
 /**
  * UI State for the Category list screen.
- * TODO: Student must complete this data class.
+ * التعديل: تم إكمال الـ Data Class لتدعم قائمة التصنيفات وحالات التحميل والأخطاء.
  */
 data class CategoryUiState(
     val categories: List<Category> = emptyList(),

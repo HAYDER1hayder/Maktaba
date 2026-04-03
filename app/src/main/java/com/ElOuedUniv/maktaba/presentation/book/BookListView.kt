@@ -1,7 +1,6 @@
 package com.ElOuedUniv.maktaba.presentation.book
 
-import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
+import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
@@ -10,15 +9,14 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.MenuBook
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.CheckCircle
-import androidx.compose.material.icons.filled.Menu
+import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
@@ -89,8 +87,8 @@ fun BookListView(
                 .padding(padding)
                 .background(
                     Brush.radialGradient(
-                        colors = listOf(GeminiPurpleNeon.copy(0.15f), GeminiDeepSpace),
-                        radius = 2500f
+                        colors = listOf(GeminiPurpleNeon.copy(0.12f), GeminiDeepSpace),
+                        radius = 2800f
                     )
                 )
         ) {
@@ -103,7 +101,7 @@ fun BookListView(
                     columns = GridCells.Fixed(2),
                     contentPadding = PaddingValues(20.dp),
                     verticalArrangement = Arrangement.spacedBy(24.dp),
-                    horizontalArrangement = Arrangement.spacedBy(16.dp),
+                    horizontalArrangement = Arrangement.spacedBy(20.dp),
                     modifier = Modifier.fillMaxSize()
                 ) {
                     items(uiState.books) { book ->
@@ -117,70 +115,99 @@ fun BookListView(
 
 @Composable
 fun BookVIPItem(book: Book, onClick: () -> Unit) {
-    // تحديد الحالة (Reading أو Finished) بناءً على منطق التطبيق
-    val isFinished = book.nbPages > 400 // مثال: إذا كان الكتاب طويلاً نعتبره مكتملاً (يمكنك ربطها بـ book.status)
-    val statusText = if (isFinished) "Finished" else "Reading"
+    val isFinished = book.nbPages > 400
     val statusColor = if (isFinished) Color(0xFF00FF88) else GeminiPurpleNeon
+    val statusText = if (isFinished) "Finished" else "Reading"
 
+    // ✅ التعديل الرئيسي: جعل كامل الـ Column بطاقة واحدة متوهجة ومشعة
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable { onClick() },
+            .shadow(18.dp, RoundedCornerShape(20.dp), spotColor = statusColor.copy(alpha = 0.5f))
+            .clip(RoundedCornerShape(20.dp))
+            .background(Color(0xFF1E1E2E)) // لون خلفية البطاقة الموحدة
+            .clickable { onClick() }
+            .border(1.dp, statusColor.copy(alpha = 0.3f), RoundedCornerShape(20.dp)), // حدود نيون خفيفة
         horizontalAlignment = Alignment.Start
     ) {
-        // بطاقة صورة الكتاب
-        Surface(
+        // 1. منطقة صورة الكتاب (الجزء العلوي) - لم نعد نضع الـ shadow هنا بل على الـ Column
+        Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .aspectRatio(0.72f)
-                .shadow(12.dp, RoundedCornerShape(16.dp), spotColor = statusColor),
-            shape = RoundedCornerShape(16.dp),
-            color = GeminiGlassCard,
-            border = androidx.compose.foundation.BorderStroke(0.5.dp, Color.White.copy(0.1f))
+                .aspectRatio(0.75f)
+                .clip(RoundedCornerShape(topStart = 20.dp, topEnd = 20.dp))
+                .background(Color.Black.copy(0.2f)) // تظليل خلف الصورة
         ) {
             if (book.imageUrl.isNullOrBlank()) {
-                Box(contentAlignment = Alignment.Center) {
-                    Text(book.title.take(1), fontSize = 48.sp, color = statusColor, fontWeight = FontWeight.Black)
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        Icons.AutoMirrored.Filled.MenuBook,
+                        contentDescription = null,
+                        modifier = Modifier.size(45.dp),
+                        tint = statusColor.copy(0.3f)
+                    )
                 }
             } else {
-                AsyncImage(model = book.imageUrl, contentDescription = null, modifier = Modifier.fillMaxSize(), contentScale = ContentScale.Crop)
+                AsyncImage(
+                    model = book.imageUrl,
+                    contentDescription = null,
+                    modifier = Modifier.fillMaxSize(),
+                    contentScale = ContentScale.Crop
+                )
             }
         }
 
-        Spacer(Modifier.height(10.dp))
-
-        // اسم الكتاب
-        Text(
-            text = book.title,
-            color = Color.White,
-            fontWeight = FontWeight.Bold,
-            fontSize = 14.sp,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis
-        )
-
-        Spacer(Modifier.height(4.dp))
-
-        // الـ ISBN والحالة (Status) كما في الصورة المطلوبة
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
+        // 2. ✅ الإطار السفلي للمعلومات (بلون مختلف وتنسيق احترافي داخل البطاقة)
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(Color(0xFF252538)) // لون الإطار السفلي لتمييز النصوص
+                .padding(12.dp)
         ) {
-            Column {
-                Text("ISBN:", color = GeminiTextSecondary, fontSize = 9.sp)
-                Text(book.isbn, color = Color.White.copy(0.8f), fontSize = 11.sp, fontWeight = FontWeight.Medium)
-            }
+            Text(
+                text = book.title,
+                color = Color.White,
+                style = MaterialTheme.typography.titleSmall.copy(
+                    fontWeight = FontWeight.ExtraBold,
+                    fontSize = 14.sp
+                ),
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
+            )
 
-            Column(horizontalAlignment = Alignment.End) {
-                Text("Status:", color = GeminiTextSecondary, fontSize = 9.sp)
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text(statusText, color = statusColor, fontSize = 11.sp, fontWeight = FontWeight.Bold)
-                    Icon(
-                        imageVector = if (isFinished) Icons.Default.CheckCircle else Icons.AutoMirrored.Filled.MenuBook,
-                        contentDescription = null,
-                        modifier = Modifier.size(12.dp).padding(start = 2.dp),
-                        tint = statusColor
+            Spacer(Modifier.height(8.dp))
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                // معلومات الـ ISBN
+                Column {
+                    Text("ISBN", color = GeminiTextSecondary, fontSize = 8.sp, fontWeight = FontWeight.Bold)
+                    Text(
+                        book.isbn,
+                        color = Color.White.copy(0.7f),
+                        fontSize = 10.sp,
+                        maxLines = 1
+                    )
+                }
+
+                // علامة الحالة (Status Badge)
+                Surface(
+                    color = statusColor.copy(alpha = 0.12f),
+                    shape = RoundedCornerShape(6.dp),
+                    border = BorderStroke(0.5.dp, statusColor.copy(alpha = 0.4f))
+                ) {
+                    Text(
+                        text = statusText,
+                        modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
+                        color = statusColor,
+                        fontSize = 9.sp,
+                        fontWeight = FontWeight.Black
                     )
                 }
             }
@@ -191,8 +218,8 @@ fun BookVIPItem(book: Book, onClick: () -> Unit) {
 @Composable
 fun EmptyBooksMessage(modifier: Modifier = Modifier) {
     Column(modifier = modifier, horizontalAlignment = Alignment.CenterHorizontally) {
-        Text("📚", fontSize = 60.sp)
-        Text("The vault is empty", color = Color.White, fontWeight = FontWeight.Bold)
-        Text("Add your first masterpiece", color = GeminiTextSecondary, fontSize = 12.sp)
+        Icon(Icons.Default.AutoStories, contentDescription = null, modifier = Modifier.size(80.dp), tint = GeminiPurpleNeon.copy(0.2f))
+        Spacer(Modifier.height(16.dp))
+        Text("Your vault is empty", color = Color.White, fontWeight = FontWeight.Bold)
     }
 }

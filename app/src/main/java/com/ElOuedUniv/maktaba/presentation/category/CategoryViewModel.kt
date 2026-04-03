@@ -4,43 +4,68 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.ElOuedUniv.maktaba.data.model.Category
 import com.ElOuedUniv.maktaba.domain.usecase.GetCategoriesUseCase
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.catch
-import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 
 @HiltViewModel
-class CategoryViewModel @Inject constructor(private val getCategoriesUseCase: GetCategoriesUseCase) : ViewModel() {
+class CategoryViewModel @Inject constructor(
+    private val getCategoriesUseCase: GetCategoriesUseCase
+) : ViewModel() {
 
-    private val _categories = MutableStateFlow<List<Category>>(emptyList())
-    val categories: StateFlow<List<Category>> = _categories.asStateFlow()
+    // 1. إدارة الحالة (State) باستخدام الكلاس الذي أنشأته أنت
+    private val _uiState = MutableStateFlow(CategoryUiState())
+    val uiState: StateFlow<CategoryUiState> = _uiState.asStateFlow()
 
-    private val _isLoading = MutableStateFlow(false)
-    val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
+    // 2. قناة للأحداث التي تحدث لمرة واحدة (مثل التنقل أو الخطأ)
+    private val _uiEvent = MutableSharedFlow<CategoryUiEvent>()
+    val uiEvent = _uiEvent.asSharedFlow()
+
+    // للحفاظ على التوافق مع الكود القديم في الـ View (إذا لم ترد تغيير الـ View حالياً)
+    val categories = _uiState.map { it.categories }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
+    val isLoading = _uiState.map { it.isLoading }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), false)
 
     init {
-        loadCategories()
+        handleAction(CategoryUiAction.RefreshCategories)
+    }
+
+    /**
+     * الدالة المركزية لمعالجة أي فعل يقوم به المستخدم
+     */
+    fun handleAction(action: CategoryUiAction) {
+        when (action) {
+            is CategoryUiAction.RefreshCategories -> loadCategories()
+            is CategoryUiAction.OnBackClick -> {
+                viewModelScope.launch { _uiEvent.emit(CategoryUiEvent.NavigateBack) }
+            }
+            is CategoryUiAction.OnCategoryClick -> {
+                viewModelScope.launch {
+                    _uiEvent.emit(CategoryUiEvent.NavigateToBookList(action.categoryId))
+                }
+            }
+        }
     }
 
     private fun loadCategories() {
         viewModelScope.launch {
-            _isLoading.value = true
+            _uiState.update { it.copy(isLoading = true, errorMessage = null) }
+
             getCategoriesUseCase()
-                .catch {
-                    _isLoading.value = false
+                .catch { exception ->
+                    _uiState.update {
+                        it.copy(isLoading = false, errorMessage = exception.message)
+                    }
+                    _uiEvent.emit(CategoryUiEvent.ShowSnackbar(exception.message ?: "Unknown Error"))
                 }
                 .collect { categoryList ->
-                    _categories.value = categoryList
-                    _isLoading.value = false
+                    _uiState.update {
+                        it.copy(categories = categoryList, isLoading = false)
+                    }
                 }
         }
-    }
-
-    fun refreshCategories() {
-        loadCategories()
     }
 }
