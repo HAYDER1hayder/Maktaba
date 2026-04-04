@@ -21,13 +21,14 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import coil.compose.AsyncImage
-import com.ElOuedUniv.maktaba.presentation.category.BookDetailUiEvent
+import com.ElOuedUniv.maktaba.presentation.book.detail.BookDetailUiEvent
 import com.ElOuedUniv.maktaba.presentation.theme.*
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun BookDetailView(
     onBackClick: () -> Unit,
+    onNavigateToEdit: (String) -> Unit,
     viewModel: BookDetailViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -37,6 +38,10 @@ fun BookDetailView(
         viewModel.uiEvent.collect { event: BookDetailUiEvent ->
             when (event) {
                 is BookDetailUiEvent.NavigateBack -> onBackClick()
+                // ✅ تأكد من وجود هذا السطر أيضاً
+                is BookDetailUiEvent.NavigateToEdit -> onNavigateToEdit(event.isbn)
+
+                else -> Unit
             }
         }
     }

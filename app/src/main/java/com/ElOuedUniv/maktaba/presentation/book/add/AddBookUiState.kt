@@ -4,8 +4,11 @@ data class AddBookUiState(
     val title: String = "",
     val isbn: String = "",
     val nbPages: String = "",
-    val imageUrl: String? = null, // الإضافة هنا: لحفظ مسار الصورة المختارة
+    val imageUrl: String? = null,
     val isLoading: Boolean = false,
     val isSuccess: Boolean = false,
-    val errorMessage: String? = null
+    val errorMessage: String? = null,
+
+    // ✅ الإضافة الجديدة: لمعرفة هل نحن في وضع "إضافة" أم "تعديل"
+    val isEditMode: Boolean = false
 )

@@ -22,10 +22,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
-import com.ElOuedUniv.maktaba.presentation.theme.GeminiDeepSpace
-import com.ElOuedUniv.maktaba.presentation.theme.GeminiGlassCard
-import com.ElOuedUniv.maktaba.presentation.theme.GeminiPurpleNeon
-import com.ElOuedUniv.maktaba.presentation.theme.GeminiTextSecondary
+import com.ElOuedUniv.maktaba.presentation.theme.*
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -34,14 +31,12 @@ fun AddBookView(
     onAction: (AddBookUiAction) -> Unit,
     onBack: () -> Unit
 ) {
-    // لانشر لاختيار صورة من معرض الصور بالهاتف
     val photoPickerLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()
     ) { uri ->
         onAction(AddBookUiAction.OnImageSelected(uri?.toString()))
     }
 
-    // التنقل التلقائي عند نجاح الإضافة
     LaunchedEffect(state.isSuccess) {
         if (state.isSuccess) {
             onBack()
@@ -53,8 +48,9 @@ fun AddBookView(
         topBar = {
             CenterAlignedTopAppBar(
                 title = {
+                    // ✅ تغيير العنوان تلقائياً بناءً على الوضع
                     Text(
-                        "ADD NEW BOOK",
+                        text = if (state.isEditMode) "EDIT BOOK" else "ADD NEW BOOK",
                         style = MaterialTheme.typography.titleMedium.copy(
                             fontWeight = FontWeight.Black,
                             letterSpacing = 2.sp
@@ -64,7 +60,8 @@ fun AddBookView(
                 },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.Default.ArrowBackIosNew, contentDescription = "Back", tint = Color.White)
+                        // التغيير من AutoMirrored إلى Default
+                        Icon(imageVector = Icons.Default.ArrowBackIosNew, contentDescription = "Back", tint = Color.White)
                     }
                 },
                 colors = TopAppBarDefaults.centerAlignedTopAppBarColors(containerColor = Color.Transparent)
@@ -81,20 +78,19 @@ fun AddBookView(
         ) {
             Spacer(modifier = Modifier.height(20.dp))
 
-            // --- منطقة غلاف الكتاب مع زر الحذف X ---
+            // --- منطقة غلاف الكتاب ---
             Box(contentAlignment = Alignment.TopEnd) {
                 Surface(
                     modifier = Modifier
                         .width(160.dp)
                         .height(230.dp)
-                        .shadow(30.dp, RoundedCornerShape(20.dp), spotColor = GeminiPurpleNeon)
-                        .clickable { photoPickerLauncher.launch("image/*") }, // فتح الاستوديو
+                        .shadow(35.dp, RoundedCornerShape(20.dp), spotColor = GeminiPurpleNeon)
+                        .clickable { photoPickerLauncher.launch("image/*") },
                     shape = RoundedCornerShape(20.dp),
                     color = GeminiGlassCard,
                     border = BorderStroke(1.dp, Color.White.copy(alpha = 0.1f))
                 ) {
                     if (state.imageUrl != null) {
-                        // عرض الصورة المختارة
                         AsyncImage(
                             model = state.imageUrl,
                             contentDescription = null,
@@ -102,7 +98,6 @@ fun AddBookView(
                             contentScale = ContentScale.Crop
                         )
                     } else {
-                        // عرض أيقونة "أضف صورة" الافتراضية
                         Column(
                             verticalArrangement = Arrangement.Center,
                             horizontalAlignment = Alignment.CenterHorizontally
@@ -113,39 +108,27 @@ fun AddBookView(
                                 modifier = Modifier.size(50.dp),
                                 tint = GeminiPurpleNeon.copy(alpha = 0.5f)
                             )
-                            Text(
-                                "Add Cover",
-                                style = MaterialTheme.typography.labelMedium,
-                                color = GeminiTextSecondary
-                            )
+                            Text("Add Cover", color = GeminiTextSecondary)
                         }
                     }
                 }
 
-                // زر الغاء الصورة (X) يظهر فقط عند وجود صورة
                 if (state.imageUrl != null) {
-                    Box(
+                    IconButton(
+                        onClick = { onAction(AddBookUiAction.OnRemoveImage) },
                         modifier = Modifier
-                            .offset(x = 10.dp, y = (-10).dp)
-                            .size(28.dp)
-                            .background(Color.Red, CircleShape)
-                            .clickable { onAction(AddBookUiAction.OnRemoveImage) }
-                            .shadow(10.dp, CircleShape),
-                        contentAlignment = Alignment.Center
+                            .offset(x = 12.dp, y = (-12).dp)
+                            .background(Color.Red.copy(0.9f), CircleShape)
+                            .size(30.dp)
                     ) {
-                        Icon(
-                            imageVector = Icons.Default.Close,
-                            contentDescription = "Remove",
-                            tint = Color.White,
-                            modifier = Modifier.size(18.dp)
-                        )
+                        Icon(Icons.Default.Close, contentDescription = null, tint = Color.White, modifier = Modifier.size(16.dp))
                     }
                 }
             }
 
             Spacer(modifier = Modifier.height(40.dp))
 
-            // --- حقول الإدخال ---
+            // --- حقول الإدخال VIP ---
             VIPInputField(
                 value = state.title,
                 onValueChange = { onAction(AddBookUiAction.OnTitleChange(it)) },
@@ -159,7 +142,9 @@ fun AddBookView(
                 value = state.isbn,
                 onValueChange = { onAction(AddBookUiAction.OnIsbnChange(it)) },
                 label = "ISBN Number",
-                icon = Icons.Default.QrCode
+                icon = Icons.Default.QrCode,
+                // منع تعديل الـ ISBN إذا كنا في وضع التعديل لأنه المفتاح الأساسي (اختياري)
+                enabled = !state.isEditMode
             )
 
             Spacer(modifier = Modifier.height(20.dp))
@@ -179,28 +164,28 @@ fun AddBookView(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(60.dp)
-                    .shadow(25.dp, RoundedCornerShape(18.dp), spotColor = GeminiPurpleNeon),
+                    .shadow(30.dp, RoundedCornerShape(20.dp), spotColor = GeminiPurpleNeon),
                 colors = ButtonDefaults.buttonColors(containerColor = GeminiPurpleNeon),
-                shape = RoundedCornerShape(18.dp),
+                shape = RoundedCornerShape(20.dp),
                 enabled = !state.isLoading
             ) {
                 if (state.isLoading) {
                     CircularProgressIndicator(color = Color.White, modifier = Modifier.size(24.dp))
                 } else {
-                    Text("CONFIRM ADD", fontWeight = FontWeight.ExtraBold)
+                    // ✅ تغيير نص الزر تلقائياً
+                    Text(
+                        text = if (state.isEditMode) "UPDATE BOOK" else "CONFIRM ADD",
+                        fontWeight = FontWeight.ExtraBold,
+                        letterSpacing = 1.sp
+                    )
                 }
             }
 
-            // --- زر الإلغاء (Cancel) المضاف تحت زر التأكيد ---
             TextButton(
                 onClick = onBack,
-                modifier = Modifier.fillMaxWidth().padding(top = 10.dp)
+                modifier = Modifier.padding(top = 12.dp)
             ) {
-                Text(
-                    "CANCEL",
-                    color = Color.White.copy(alpha = 0.6f),
-                    style = MaterialTheme.typography.labelLarge
-                )
+                Text("CANCEL", color = Color.White.copy(0.5f))
             }
 
             Spacer(modifier = Modifier.height(30.dp))
@@ -213,21 +198,25 @@ fun VIPInputField(
     value: String,
     onValueChange: (String) -> Unit,
     label: String,
-    icon: ImageVector
+    icon: ImageVector,
+    enabled: Boolean = true
 ) {
     OutlinedTextField(
         value = value,
         onValueChange = onValueChange,
+        enabled = enabled,
         label = { Text(label, color = GeminiTextSecondary) },
         leadingIcon = { Icon(icon, contentDescription = null, tint = GeminiPurpleNeon) },
         modifier = Modifier.fillMaxWidth(),
         colors = OutlinedTextFieldDefaults.colors(
             focusedBorderColor = GeminiPurpleNeon,
-            unfocusedBorderColor = Color.White.copy(alpha = 0.1f),
+            unfocusedBorderColor = Color.White.copy(0.1f),
+            disabledBorderColor = Color.White.copy(0.05f),
             focusedTextColor = Color.White,
-            unfocusedTextColor = Color.White
+            unfocusedTextColor = Color.White,
+            disabledTextColor = Color.White.copy(0.5f)
         ),
-        shape = RoundedCornerShape(16.dp),
+        shape = RoundedCornerShape(18.dp),
         singleLine = true
     )
 }

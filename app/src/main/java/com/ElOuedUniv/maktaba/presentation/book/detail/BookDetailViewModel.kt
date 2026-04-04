@@ -4,7 +4,7 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.ElOuedUniv.maktaba.domain.usecase.GetBookByIsbnUseCase
-import com.ElOuedUniv.maktaba.presentation.category.BookDetailUiEvent
+import com.ElOuedUniv.maktaba.presentation.book.detail.BookDetailUiEvent
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -41,12 +41,19 @@ class BookDetailViewModel @Inject constructor(
 
     fun onAction(action: BookDetailUiAction) {
         when (action) {
+            // في ملف BookDetailViewModel.kt
             is BookDetailUiAction.OnBackClick -> {
                 viewModelScope.launch {
                     _uiEvent.emit(BookDetailUiEvent.NavigateBack)
                 }
             }
-            is BookDetailUiAction.OnEditClick -> { /* منطق التعديل */ }
+
+            is BookDetailUiAction.OnEditClick -> {
+                viewModelScope.launch {
+                    // تأكد من تمرير الـ isbn المعرف في أعلى الـ ViewModel
+                    _uiEvent.emit(BookDetailUiEvent.NavigateToEdit(isbn))
+                }
+            }
             is BookDetailUiAction.OnDeleteClick -> { /* منطق الحذف */ }
             is BookDetailUiAction.OnToggleStatus -> { /* منطق الحالة */ }
         }

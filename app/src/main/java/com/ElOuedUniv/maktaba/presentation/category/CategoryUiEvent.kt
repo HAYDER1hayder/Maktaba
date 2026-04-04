@@ -14,7 +14,3 @@ sealed interface CategoryUiEvent {
     // الحدث الجديد: الانتقال لشاشة الكتب بناءً على التصنيف المختار
     data class NavigateToBookList(val categoryId: String) : CategoryUiEvent
 }
-
-sealed class BookDetailUiEvent {
-    object NavigateBack : BookDetailUiEvent()
-}
