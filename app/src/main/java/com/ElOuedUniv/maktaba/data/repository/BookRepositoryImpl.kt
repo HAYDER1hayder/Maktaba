@@ -32,6 +32,7 @@ class BookRepositoryImpl @Inject constructor() : BookRepository {
     }
 
     override fun addBook(book: Book) {
+        _booksList.removeAll { it.isbn == book.isbn }
         _booksList.add(book)
         booksFlow.tryEmit(_booksList.toList())
     }

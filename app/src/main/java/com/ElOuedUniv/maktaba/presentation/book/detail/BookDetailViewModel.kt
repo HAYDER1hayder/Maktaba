@@ -4,15 +4,11 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.ElOuedUniv.maktaba.domain.usecase.GetBookByIsbnUseCase
-import com.ElOuedUniv.maktaba.presentation.book.detail.BookDetailUiEvent
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.asSharedFlow
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import javax.inject.Inject
+import kotlin.random.Random
 
 @HiltViewModel
 class BookDetailViewModel @Inject constructor(
@@ -21,41 +17,42 @@ class BookDetailViewModel @Inject constructor(
 ) : ViewModel() {
 
     private val isbn: String = checkNotNull(savedStateHandle["isbn"])
-
     private val _uiState = MutableStateFlow(BookDetailUiState())
     val uiState = _uiState.asStateFlow()
 
-    // ✅ تم تحديد النوع <BookDetailUiEvent> صراحةً لحل الخطأ
     private val _uiEvent = MutableSharedFlow<BookDetailUiEvent>()
     val uiEvent = _uiEvent.asSharedFlow()
 
-    init {
-        loadBook()
-    }
+    init { loadBook() }
 
-    private fun loadBook() {
+    fun loadBook() {
         _uiState.update { it.copy(isLoading = true) }
-        val book = getBookByIsbnUseCase(isbn)
-        _uiState.update { it.copy(isLoading = false, book = book) }
+
+        // جلب الكتاب الأصلي من قاعدة البيانات
+        val originalBook = getBookByIsbnUseCase(isbn)
+
+        // ✅ حقن "التعديلات المجنونة": محاكاة عدد صفحات مقروءة عشوائي
+        // في المستقبل، سيأتي هذا الرقم مباشرة من قاعدة البيانات
+        val mockPagesRead = if (originalBook != null) {
+            Random.nextInt(0, originalBook.nbPages + 1)
+        } else 0
+
+        val updatedBook = originalBook?.copy(
+            pagesRead = mockPagesRead
+        )
+
+        _uiState.update { it.copy(isLoading = false, book = updatedBook) }
     }
 
     fun onAction(action: BookDetailUiAction) {
-        when (action) {
-            // في ملف BookDetailViewModel.kt
-            is BookDetailUiAction.OnBackClick -> {
-                viewModelScope.launch {
-                    _uiEvent.emit(BookDetailUiEvent.NavigateBack)
-                }
+        viewModelScope.launch {
+            when (action) {
+                is BookDetailUiAction.OnBackClick -> _uiEvent.emit(BookDetailUiEvent.NavigateBack)
+                is BookDetailUiAction.OnEditClick -> _uiEvent.emit(BookDetailUiEvent.NavigateToEdit(isbn))
+                is BookDetailUiAction.OnCoverClick -> _uiEvent.emit(BookDetailUiEvent.LaunchGallery)
+                is BookDetailUiAction.OnDeleteClick -> { /* Logic */ }
+                is BookDetailUiAction.OnToggleStatus -> { /* Logic */ }
             }
-
-            is BookDetailUiAction.OnEditClick -> {
-                viewModelScope.launch {
-                    // تأكد من تمرير الـ isbn المعرف في أعلى الـ ViewModel
-                    _uiEvent.emit(BookDetailUiEvent.NavigateToEdit(isbn))
-                }
-            }
-            is BookDetailUiAction.OnDeleteClick -> { /* منطق الحذف */ }
-            is BookDetailUiAction.OnToggleStatus -> { /* منطق الحالة */ }
         }
     }
 }

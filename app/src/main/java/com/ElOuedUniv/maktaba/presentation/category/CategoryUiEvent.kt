@@ -1,9 +1,7 @@
 package com.ElOuedUniv.maktaba.presentation.category
 
-/**
- * One-time UI events (System events) for the Category screen.
- * تم إكمال الأحداث لدعم التنبيهات، الرجوع، والانتقال للفئات.
- */
+//One-time UI events (System events) for the Category screen.
+
 sealed interface CategoryUiEvent {
     // لإظهار رسالة خطأ أو تنبيه للمستخدم بشكل مفاجئ
     data class ShowSnackbar(val message: String) : CategoryUiEvent

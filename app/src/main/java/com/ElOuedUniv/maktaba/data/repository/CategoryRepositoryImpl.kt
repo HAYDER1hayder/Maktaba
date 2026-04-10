@@ -1,5 +1,6 @@
 package com.ElOuedUniv.maktaba.data.repository
 
+import com.ElOuedUniv.maktaba.R
 import com.ElOuedUniv.maktaba.data.model.Category
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
@@ -14,17 +15,20 @@ class CategoryRepositoryImpl @Inject constructor() : CategoryRepository {
         Category(
             id = "1",
             name = "Programming",
-            description = "Books about software development and coding"
+            description = "Books about software development and coding",
+            iconRes = R.drawable.ic_sketch_programming
         ),
         Category(
             id = "2",
             name = "Algorithms",
-            description = "Books about algorithms and data structures"
+            description = "Books about algorithms and data structures",
+            iconRes = R.drawable.ic_sketch_algorithms
         ),
         Category(
             id = "3",
             name = "Databases",
-            description = "Books about database design and management"
+            description = "Books about database design and management",
+            iconRes = R.drawable.ic_sketch_databases
         )
     )
 

@@ -6,6 +6,8 @@ import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
@@ -19,6 +21,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
@@ -48,7 +52,6 @@ fun AddBookView(
         topBar = {
             CenterAlignedTopAppBar(
                 title = {
-                    // ✅ تغيير العنوان تلقائياً بناءً على الوضع
                     Text(
                         text = if (state.isEditMode) "EDIT BOOK" else "ADD NEW BOOK",
                         style = MaterialTheme.typography.titleMedium.copy(
@@ -60,7 +63,6 @@ fun AddBookView(
                 },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        // التغيير من AutoMirrored إلى Default
                         Icon(imageVector = Icons.Default.ArrowBackIosNew, contentDescription = "Back", tint = Color.White)
                     }
                 },
@@ -133,27 +135,46 @@ fun AddBookView(
                 value = state.title,
                 onValueChange = { onAction(AddBookUiAction.OnTitleChange(it)) },
                 label = "Book Title",
-                icon = Icons.Default.MenuBook
+                icon = Icons.Default.MenuBook,
+                keyboardOptions = KeyboardOptions(
+                    keyboardType = KeyboardType.Text,
+                    imeAction = ImeAction.Next
+                )
             )
 
             Spacer(modifier = Modifier.height(20.dp))
 
+            // ✅ حقل الـ ISBN مع فلتر لمنع الحروف تماماً
             VIPInputField(
                 value = state.isbn,
                 onValueChange = { onAction(AddBookUiAction.OnIsbnChange(it)) },
                 label = "ISBN Number",
                 icon = Icons.Default.QrCode,
-                // منع تعديل الـ ISBN إذا كنا في وضع التعديل لأنه المفتاح الأساسي (اختياري)
-                enabled = !state.isEditMode
+                enabled = !state.isEditMode,
+                keyboardOptions = KeyboardOptions(
+                    keyboardType = KeyboardType.Text,
+                    imeAction = ImeAction.Next
+                )
             )
 
             Spacer(modifier = Modifier.height(20.dp))
 
+            // ✅ حقل عدد الصفحات مع فلتر لمنع الحروف تماماً
             VIPInputField(
                 value = state.nbPages,
-                onValueChange = { onAction(AddBookUiAction.OnPagesChange(it)) },
+                onValueChange = { newValue ->
+                    val filteredValue = newValue.filter { it.isDigit() }
+                    onAction(AddBookUiAction.OnPagesChange(filteredValue))
+                },
                 label = "Total Pages",
-                icon = Icons.Default.AutoStories
+                icon = Icons.Default.AutoStories,
+                keyboardOptions = KeyboardOptions(
+                    keyboardType = KeyboardType.Number,
+                    imeAction = ImeAction.Done
+                ),
+                keyboardActions = KeyboardActions(
+                    onDone = { onAction(AddBookUiAction.OnAddClick) }
+                )
             )
 
             Spacer(modifier = Modifier.height(50.dp))
@@ -172,7 +193,6 @@ fun AddBookView(
                 if (state.isLoading) {
                     CircularProgressIndicator(color = Color.White, modifier = Modifier.size(24.dp))
                 } else {
-                    // ✅ تغيير نص الزر تلقائياً
                     Text(
                         text = if (state.isEditMode) "UPDATE BOOK" else "CONFIRM ADD",
                         fontWeight = FontWeight.ExtraBold,
@@ -199,11 +219,15 @@ fun VIPInputField(
     onValueChange: (String) -> Unit,
     label: String,
     icon: ImageVector,
-    enabled: Boolean = true
+    enabled: Boolean = true,
+    keyboardOptions: KeyboardOptions = KeyboardOptions.Default,
+    keyboardActions: KeyboardActions = KeyboardActions.Default
 ) {
     OutlinedTextField(
         value = value,
         onValueChange = onValueChange,
+        keyboardOptions = keyboardOptions,
+        keyboardActions = keyboardActions,
         enabled = enabled,
         label = { Text(label, color = GeminiTextSecondary) },
         leadingIcon = { Icon(icon, contentDescription = null, tint = GeminiPurpleNeon) },

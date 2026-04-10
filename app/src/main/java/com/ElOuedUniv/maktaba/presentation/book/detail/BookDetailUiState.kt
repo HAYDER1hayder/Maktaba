@@ -4,23 +4,23 @@ import com.ElOuedUniv.maktaba.data.model.Book
 import androidx.compose.ui.graphics.Color
 import com.ElOuedUniv.maktaba.presentation.theme.GeminiPurpleNeon
 
-/**
- * حالة واجهة تفاصيل الكتاب.
- * تم إضافة حقول الحساب التلقائي لدعم شريط التقدم النيون في التصميم الـ VIP.
- */
 data class BookDetailUiState(
     val book: Book? = null,
     val isLoading: Boolean = false,
     val errorMessage: String? = null
 ) {
-    // حساب نسبة التقدم (مثلاً إذا كان الكتاب 400 صفحة وقرأنا 300 تظهر 0.75f)
-    // ملاحظة: سنفترض وجود حقل صفحات مقروءة في الموديل لاحقاً أو نضع قيمة افتراضية
-    val progress: Float = 0.75f // هذه القيمة تدعم الـ 75% الموجودة في رسمك
+    // ✅ التقدم الآن يُحسب ديناميكياً من الموديل
+    val progress: Float = book?.progress ?: 0f
 
-    // تحديد اللون المشع بناءً على حالة الكتاب (أخضر للمنتهي، أرجواني للقراءة)
-    val statusColor: Color = if (book?.nbPages ?: 0 > 400) {
-        Color(0xFF00FF88) // نيون أخضر للفخامة
-    } else {
-        GeminiPurpleNeon // نيون أرجواني (ثيم التطبيق)
+    // ✅ استخراج القيم لعرضها في العدادات الرقمية
+    val pagesRead: Int = book?.pagesRead ?: 0
+    val totalPages: Int = book?.nbPages ?: 0
+    val pagesRemaining: Int = book?.pagesRemaining ?: 0
+
+    // ✅ منطق الألوان النيون المطور (Cyber Colors)
+    val statusColor: Color = when {
+        progress >= 1f -> Color(0xFF00FF88) // أخضر نيون (مكتمل)
+        progress > 0.5f -> GeminiPurpleNeon // أرجواني نيون (متقدم)
+        else -> Color(0xFF00E5FF) // أزرق سيان نيون (بداية القراءة)
     }
 }

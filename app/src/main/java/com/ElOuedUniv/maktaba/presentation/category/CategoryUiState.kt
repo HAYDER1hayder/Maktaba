@@ -2,10 +2,8 @@ package com.ElOuedUniv.maktaba.presentation.category
 
 import com.ElOuedUniv.maktaba.data.model.Category
 
-/**
- * UI State for the Category list screen.
- * التعديل: تم إكمال الـ Data Class لتدعم قائمة التصنيفات وحالات التحميل والأخطاء.
- */
+//UI State for the Category list screen
+
 data class CategoryUiState(
     val categories: List<Category> = emptyList(),
     val isLoading: Boolean = false,
