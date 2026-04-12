@@ -15,20 +15,20 @@ class CategoryRepositoryImpl @Inject constructor() : CategoryRepository {
         Category(
             id = "1",
             name = "Programming",
-            description = "Books about software development and coding",
-            iconRes = R.drawable.ic_sketch_programming
+            description = "Books about software development and coding"
+
         ),
         Category(
             id = "2",
             name = "Algorithms",
-            description = "Books about algorithms and data structures",
-            iconRes = R.drawable.ic_sketch_algorithms
+            description = "Books about algorithms and data structures"
+
         ),
         Category(
             id = "3",
             name = "Databases",
-            description = "Books about database design and management",
-            iconRes = R.drawable.ic_sketch_databases
+            description = "Books about database design and management"
+
         )
     )
 

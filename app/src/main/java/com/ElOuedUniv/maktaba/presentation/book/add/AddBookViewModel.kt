@@ -2,35 +2,28 @@ package com.ElOuedUniv.maktaba.presentation.book.add
 
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
-import androidx.lifecycle.viewModelScope
 import com.ElOuedUniv.maktaba.data.model.Book
 import com.ElOuedUniv.maktaba.domain.usecase.AddBookUseCase
-import com.ElOuedUniv.maktaba.domain.usecase.GetBookByIsbnUseCase // ✅ نحتاج هذا الجلب
+import com.ElOuedUniv.maktaba.domain.usecase.GetBookByIsbnUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
-import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltViewModel
 class AddBookViewModel @Inject constructor(
     private val addBookUseCase: AddBookUseCase,
-    private val getBookByIsbnUseCase: GetBookByIsbnUseCase, // ✅ لإحضار بيانات الكتاب المراد تعديله
-    savedStateHandle: SavedStateHandle // ✅ لاستقبال الـ ISBN من شاشة التفاصيل
+    private val getBookByIsbnUseCase: GetBookByIsbnUseCase,
+    savedStateHandle: SavedStateHandle
 ) : ViewModel() {
 
-    // التقاط الـ ISBN (إذا كان null فهذا يعني عملية إضافة كتاب جديد)
     private val editBookIsbn: String? = savedStateHandle["isbn"]
-
     private val _uiState = MutableStateFlow(AddBookUiState())
     val uiState = _uiState.asStateFlow()
 
     init {
-        // ✅ إذا دخلنا في وضع التعديل، قم بتعبئة الحقول فوراً
-        editBookIsbn?.let { isbn ->
-            loadBookData(isbn)
-        }
+        editBookIsbn?.let { isbn -> loadBookData(isbn) }
     }
 
     private fun loadBookData(isbn: String) {
@@ -42,33 +35,72 @@ class AddBookViewModel @Inject constructor(
                     title = it.title,
                     nbPages = it.nbPages.toString(),
                     imageUrl = it.imageUrl,
-                    isEditMode = true // نحتاج إضافة هذه الخاصية في الـ UiState
+                    isEditMode = true
                 )
             }
+            validateForm() // تحديث حالة الزر بعد جلب البيانات
         }
     }
 
     fun onAction(action: AddBookUiAction) {
         when (action) {
             is AddBookUiAction.OnTitleChange -> {
-                _uiState.update { it.copy(title = action.title) }
+                // 1. حد العنوان: 100 حرف فقط
+                if (action.title.length <= 100) {
+                    _uiState.update { it.copy(title = action.title) }
+                    validateForm()
+                }
             }
             is AddBookUiAction.OnIsbnChange -> {
-                _uiState.update { it.copy(isbn = action.isbn) }
+                // 2. معالجة الـ ISBN (أرقام فقط + شحطة تلقائية)
+                handleIsbnInput(action.isbn)
             }
             is AddBookUiAction.OnPagesChange -> {
-                _uiState.update { it.copy(nbPages = action.pages) }
+                // 3. حد الصفحات: 10,000 صفحة (5 خانات)
+                val digits = action.pages.filter { it.isDigit() }
+                if (digits.length <= 5 && (digits.toIntOrNull() ?: 0) <= 10000) {
+                    _uiState.update { it.copy(nbPages = digits) }
+                    validateForm()
+                }
             }
             is AddBookUiAction.OnImageSelected -> {
                 _uiState.update { it.copy(imageUrl = action.uri) }
+                validateForm()
             }
             AddBookUiAction.OnRemoveImage -> {
                 _uiState.update { it.copy(imageUrl = null) }
+                validateForm()
             }
             AddBookUiAction.OnAddClick -> {
-                saveBook() // تغيير الاسم من addBook إلى saveBook ليكون أشمل
+                if (_uiState.value.isButtonEnabled) saveBook()
             }
         }
+    }
+
+    private fun handleIsbnInput(input: String) {
+        // حذف أي شحطات قديمة لمعالجة الأرقام الصافية
+        val digitsOnly = input.filter { it.isDigit() }
+
+        if (digitsOnly.length <= 13) {
+            val formatted = if (digitsOnly.length > 3) {
+                // ✅ إضافة الشحطة تلقائياً بعد الرقم الثالث
+                "${digitsOnly.substring(0, 3)}-${digitsOnly.substring(3)}"
+            } else {
+                digitsOnly
+            }
+            _uiState.update { it.copy(isbn = formatted) }
+            validateForm()
+        }
+    }
+
+    private fun validateForm() {
+        val state = _uiState.value
+        // ✅ الشرط: لا يتفعل الزر إلا إذا كانت الحقول الثلاثة ممتلئة
+        val isValid = state.title.isNotBlank() &&
+                state.isbn.length >= 4 && // التأكد من كتابة 3 أرقام + شحطة + رقم واحد على الأقل
+                state.nbPages.isNotBlank()
+
+        _uiState.update { it.copy(isButtonEnabled = isValid) }
     }
 
     private fun saveBook() {
@@ -79,8 +111,6 @@ class AddBookViewModel @Inject constructor(
             nbPages = currentState.nbPages.toIntOrNull() ?: 0,
             imageUrl = currentState.imageUrl
         )
-
-        // هنا يتم الحفظ (في حالة التعديل، الـ Database ستقوم بعمل Update لأن الـ ISBN نفسه موجود)
         addBookUseCase(book)
         _uiState.update { it.copy(isSuccess = true) }
     }

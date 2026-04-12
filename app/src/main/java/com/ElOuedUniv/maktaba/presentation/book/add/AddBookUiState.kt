@@ -8,7 +8,7 @@ data class AddBookUiState(
     val isLoading: Boolean = false,
     val isSuccess: Boolean = false,
     val errorMessage: String? = null,
-
-    // ✅ الإضافة الجديدة: لمعرفة هل نحن في وضع "إضافة" أم "تعديل"
-    val isEditMode: Boolean = false
+    val isEditMode: Boolean = false,
+    // ✅ الإضافة الجديدة: للتحكم في تفعيل زر الحفظ
+    val isButtonEnabled: Boolean = false
 )

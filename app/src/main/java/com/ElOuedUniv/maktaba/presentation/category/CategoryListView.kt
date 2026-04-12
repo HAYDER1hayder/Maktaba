@@ -1,35 +1,30 @@
 package com.ElOuedUniv.maktaba.presentation.category
 
+import androidx.compose.animation.core.*
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.shadow
-import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.*
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.ElOuedUniv.maktaba.data.model.Category
-import com.ElOuedUniv.maktaba.presentation.category.CategoryViewModel
-// استيراد ألوان النيون الخاصة بمشروعك
 import com.ElOuedUniv.maktaba.presentation.theme.GeminiDeepSpace
-import com.ElOuedUniv.maktaba.presentation.theme.GeminiGlassCard
 import com.ElOuedUniv.maktaba.presentation.theme.GeminiPurpleNeon
-import com.ElOuedUniv.maktaba.presentation.theme.GeminiTextSecondary
+import kotlinx.coroutines.delay
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -67,32 +62,21 @@ fun CategoryListView(
             )
         }
     ) { paddingValues ->
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues)
-                .background(
-                    Brush.verticalGradient(
-                        listOf(GeminiPurpleNeon.copy(alpha = 0.05f), GeminiDeepSpace)
-                    )
-                )
-        ) {
+        Box(modifier = Modifier.fillMaxSize().padding(paddingValues)) {
             if (isLoading) {
                 CircularProgressIndicator(
                     modifier = Modifier.align(Alignment.Center),
                     color = GeminiPurpleNeon
                 )
             } else {
-                if (categories.isEmpty()) {
-                    EmptyCategoriesMessage(
-                        modifier = Modifier.align(Alignment.Center)
-                    )
-                } else {
-                    // استبدال القائمة العادية بقائمة الـ VIP
-                    CategoryList(
-                        categories = categories,
-                        modifier = Modifier.fillMaxSize()
-                    )
+                LazyColumn(
+                    modifier = Modifier.fillMaxSize(),
+                    contentPadding = PaddingValues(vertical = 20.dp),
+                    verticalArrangement = Arrangement.spacedBy(4.dp) // مسافة بسيطة بين الكروت
+                ) {
+                    itemsIndexed(categories) { index, category ->
+                        CategoryItem(category = category, index = index)
+                    }
                 }
             }
         }
@@ -100,110 +84,116 @@ fun CategoryListView(
 }
 
 @Composable
-fun CategoryList(
-    categories: List<Category>,
-    modifier: Modifier = Modifier
-) {
-    LazyColumn(
-        modifier = modifier,
-        contentPadding = PaddingValues(20.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
-    ) {
-        items(categories) { category ->
-            CategoryItem(category = category)
-        }
-    }
-}
+fun CategoryItem(category: Category, index: Int) {
+    val cardAnimation = remember { Animatable(initialValue = 0f) }
 
-@Composable
-fun CategoryItem(category: Category) {
-    Surface(
+    LaunchedEffect(Unit) {
+        delay(index * 130L)
+        cardAnimation.animateTo(
+            targetValue = 1f,
+            animationSpec = tween(durationMillis = 700, easing = FastOutSlowInEasing)
+        )
+    }
+
+    // تبادل الألوان كما في الواجهة الرئيسية
+    val themeColor = if (index % 2 == 0) Color(0xFF00FFD1) else GeminiPurpleNeon
+
+    Box(
         modifier = Modifier
             .fillMaxWidth()
-            .shadow(15.dp, RoundedCornerShape(20.dp), spotColor = GeminiPurpleNeon)
-            .clickable { /* Handle click */ },
-        shape = RoundedCornerShape(20.dp),
-        color = GeminiGlassCard,
-        border = BorderStroke(1.dp, Color.White.copy(alpha = 0.1f))
+            .height(210.dp) // ارتفاع ضخم للهيبة
+            .graphicsLayer {
+                translationY = (100 * (1f - cardAnimation.value)).dp.toPx()
+                alpha = cardAnimation.value
+                scaleX = 0.95f + (0.05f * cardAnimation.value)
+                scaleY = 0.95f + (0.05f * cardAnimation.value)
+            }
+            .padding(horizontal = 24.dp, vertical = 12.dp)
     ) {
-        Row(
+        // ✅ الطبقة الخلفية (بدون إزاحة يميناً أو يساراً لضمان خط واحد)
+        Box(
             modifier = Modifier
-                .padding(16.dp)
-                .fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            // أيقونة VIP دائرية متوهجة
-            Box(
-                modifier = Modifier
-                    .size(56.dp)
-                    .background(GeminiPurpleNeon.copy(alpha = 0.1f), CircleShape)
-                    .border(1.dp, GeminiPurpleNeon.copy(alpha = 0.4f), CircleShape),
-                contentAlignment = Alignment.Center
-            ) {
-                Icon(
-                    imageVector = getCategoryIcon(category.name),
-                    contentDescription = null,
-                    modifier = Modifier.size(28.dp),
-                    tint = GeminiPurpleNeon
+                .fillMaxSize()
+                .offset(y = 8.dp) // إزاحة لأسفل فقط لعمق الـ 3D
+                .background(themeColor.copy(alpha = 0.1f), RoundedCornerShape(24.dp))
+                .border(1.dp, themeColor.copy(alpha = 0.2f), RoundedCornerShape(24.dp))
+        )
+
+        // ✅ الكرت الأساسي (الواقعي والمستقيم)
+        Surface(
+            modifier = Modifier
+                .fillMaxSize()
+                .shadow(
+                    elevation = 20.dp,
+                    shape = RoundedCornerShape(24.dp),
+                    spotColor = themeColor.copy(alpha = 0.4f)
                 )
-            }
-
-            Spacer(modifier = Modifier.width(20.dp))
-
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = category.name.uppercase(),
-                    style = MaterialTheme.typography.titleMedium.copy(
-                        fontWeight = FontWeight.ExtraBold,
-                        letterSpacing = 1.sp
-                    ),
-                    color = Color.White
+                .clickable { /* Handle click */ },
+            shape = RoundedCornerShape(24.dp),
+            color = Color(0xFF121212), // نفس لون كروت الواجهة الرئيسية
+            border = BorderStroke(
+                width = 1.dp,
+                brush = Brush.verticalGradient(
+                    colors = listOf(themeColor.copy(alpha = 0.5f), Color.Transparent)
                 )
-
-                Text(
-                    text = category.description,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = GeminiTextSecondary,
-                    maxLines = 1
-                )
-            }
-
-            Icon(
-                imageVector = Icons.Default.ChevronRight,
-                contentDescription = null,
-                tint = Color.White.copy(alpha = 0.3f)
             )
+        ) {
+            Box(modifier = Modifier.fillMaxSize().padding(24.dp)) {
+                // الشارة العلوية
+                Surface(
+                    modifier = Modifier.align(Alignment.TopEnd),
+                    shape = RoundedCornerShape(8.dp),
+                    color = Color.Black.copy(alpha = 0.5f),
+                    border = BorderStroke(0.5.dp, themeColor.copy(alpha = 0.4f))
+                ) {
+                    Text(
+                        text = "SECURED DATA",
+                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                        style = MaterialTheme.typography.labelSmall,
+                        color = themeColor,
+                        fontSize = 8.sp,
+                        fontWeight = FontWeight.Black
+                    )
+                }
+
+                // المحتوى السفلي
+                Column(modifier = Modifier.align(Alignment.BottomStart)) {
+                    Icon(
+                        imageVector = getCategoryIcon(category.name),
+                        contentDescription = null,
+                        modifier = Modifier.size(40.dp),
+                        tint = themeColor
+                    )
+
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    Text(
+                        text = category.name.uppercase(),
+                        style = MaterialTheme.typography.titleLarge.copy(
+                            fontWeight = FontWeight.Black,
+                            letterSpacing = 2.sp
+                        ),
+                        color = Color.White
+                    )
+
+                    Text(
+                        text = "ACCESS LEVEL: FULL",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = Color.White.copy(alpha = 0.3f),
+                        letterSpacing = 1.sp
+                    )
+                }
+            }
         }
     }
 }
 
-// دالة لربط الأسماء بالأيقونات الفخمة
 fun getCategoryIcon(name: String): ImageVector {
-    return when (name) {
-        "Programming" -> Icons.Default.Terminal
-        "Algorithms" -> Icons.Default.Hub
-        "Databases" -> Icons.Default.Storage
+    return when {
+        name.contains("Program", true) -> Icons.Default.Terminal
+        name.contains("Algo", true) -> Icons.Default.Hub
+        name.contains("Data", true) -> Icons.Default.Storage
+        name.contains("Security", true) -> Icons.Default.Shield
         else -> Icons.Default.AutoAwesome
-    }
-}
-
-@Composable
-fun EmptyCategoriesMessage(modifier: Modifier = Modifier) {
-    Column(
-        modifier = modifier,
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        Icon(
-            Icons.Default.FolderOpen,
-            contentDescription = null,
-            modifier = Modifier.size(80.dp),
-            tint = GeminiPurpleNeon.copy(alpha = 0.2f)
-        )
-        Spacer(modifier = Modifier.height(16.dp))
-        Text(
-            text = "No categories available",
-            style = MaterialTheme.typography.titleMedium,
-            color = Color.White
-        )
     }
 }
