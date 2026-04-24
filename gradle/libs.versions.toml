@@ -1,4 +1,6 @@
 [versions]
+supabase = "2.5.0"
+ktor = "2.3.11"
 agp = "9.0.1"
 coreKtx = "1.10.1"
 junit = "4.13.2"
@@ -14,6 +16,10 @@ ui = "1.10.6"
 foundation = "1.10.6"
 
 [libraries]
+supabase-postgrest = { group = "io.github.jan-tennert.supabase", name = "postgrest-kt", version.ref = "supabase" }
+supabase-storage = { group = "io.github.jan-tennert.supabase", name = "storage-kt", version.ref = "supabase" }
+
+ktor-client-android = { group = "io.ktor", name = "ktor-client-android", version.ref = "ktor" }
 hilt-android = { group = "com.google.dagger", name = "hilt-android", version.ref = "hilt" }
 hilt-android-compiler = { group = "com.google.dagger", name = "hilt-android-compiler", version.ref = "hilt" }
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }

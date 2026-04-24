@@ -29,4 +29,5 @@ object DataModule {
     ): BookRepository {
         return bookRepositoryImpl
     }
+
 }
