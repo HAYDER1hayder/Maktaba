@@ -8,6 +8,7 @@ import kotlinx.serialization.Transient
 data class Book(
     val isbn: String,
     val title: String,
+
     @SerialName("nbpages")
     val nbPages: Int,
 
@@ -16,14 +17,17 @@ data class Book(
 
     @SerialName("imageurl")
     val imageUrl: String? = null,
-    val status: String = "Reading"
+
+    val status: String = "Reading",
+
+
+    @SerialName("user_id")
+    val userId: String? = null
 ) {
 
     @Transient
     val progress: Float
         get() = if (nbPages > 0) pagesRead.toFloat() / nbPages.toFloat() else 0f
-
-
 
     @Transient
     val pagesRemaining: Int

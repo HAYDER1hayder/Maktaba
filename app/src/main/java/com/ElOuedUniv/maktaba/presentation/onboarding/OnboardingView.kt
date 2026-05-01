@@ -6,9 +6,13 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.MenuBook
 import androidx.compose.material.icons.filled.MenuBook
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -19,19 +23,26 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.ElOuedUniv.maktaba.presentation.theme.appBackground
+import com.ElOuedUniv.maktaba.presentation.theme.cardBackground
+import com.ElOuedUniv.maktaba.presentation.theme.neonGreen
+import com.ElOuedUniv.maktaba.presentation.theme.neonPurple
+import com.ElOuedUniv.maktaba.presentation.theme.textGray
 
 @Composable
 fun OnboardingView(
     onNavigateToLibrary: () -> Unit,
     viewModel: OnboardingViewModel = hiltViewModel()
 ) {
-    // 🎨 استخراج الألوان من صور تطبيقك الداخلية للحفاظ على الهوية
-    val appBackground = Color(0xFF090A0F) // أسود عميق جداً
-    val cardBackground = Color(0xFF11141A) // لون البطاقات الداخلي
-    val neonGreen = Color(0xFF00E676) // لون النيون الأخضر (SECURED)
-    val neonPurple = Color(0xFFAB47BC) // لون النيون البنفسجي (زر +)
-    val textWhite = Color(0xFFF0F0F0)
-    val textGray = Color(0xFF8B949E)
+
+    val isLoggedIn by viewModel.isLoggedIn.collectAsState(initial = false)
+
+    LaunchedEffect(isLoggedIn) {
+        if (isLoggedIn) {
+            onNavigateToLibrary()
+        }
+    }
+
 
     Column(
         modifier = Modifier
@@ -57,7 +68,7 @@ fun OnboardingView(
             contentAlignment = Alignment.Center
         ) {
             Icon(
-                imageVector = Icons.Default.MenuBook,
+                imageVector = androidx.compose.material.icons.Icons.AutoMirrored.Filled.MenuBook,
                 contentDescription = "Logo",
                 modifier = Modifier.size(60.dp),
                 tint = neonGreen // أيقونة بلون النيون الأخضر

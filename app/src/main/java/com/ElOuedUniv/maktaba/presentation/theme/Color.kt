@@ -31,3 +31,10 @@ val GeminiTextSecondary = Color(0xFFB0B0B0)
 
 // 6. تدرج الإضاءة (Glow Gradient)
 val GeminiGlowStart = Color(0xFF1A1A2E)
+
+val appBackground = Color(0xFF090A0F) // أسود عميق جداً
+val cardBackground = Color(0xFF11141A) // لون البطاقات الداخلي
+val neonGreen = Color(0xFF00E676) // لون النيون الأخضر (SECURED)
+val neonPurple = Color(0xFFAB47BC) // لون النيون البنفسجي (زر +)
+val textWhite = Color(0xFFF0F0F0)
+val textGray = Color(0xFF8B949E)
